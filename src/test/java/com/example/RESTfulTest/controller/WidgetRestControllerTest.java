@@ -156,6 +156,29 @@ class WidgetRestControllerTest {
 
     }
 
+    @Test
+    @DisplayName("GET /rest/widget/1 ")
+    void testGetWidgetById() throws Exception {
+        Widget widget = new Widget(1L, "Widget", "Description", 1);
+        // Setup our mocked service
+        doReturn(Optional.of(widget)).when(service).findById(1L);
+
+        // Execute the GET request
+        mockMvc.perform(get("/rest/widget/{id}", 1L))
+                // Validate the response code
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                // Validate headers
+                .andExpect(header().string(HttpHeaders.LOCATION, "/rest/widget/1"))
+                .andExpect(header().string(HttpHeaders.ETAG, "\"1\""))
+                //Validate the returned fields
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is("Widget")))
+                .andExpect(jsonPath("$.description", is("Description")))
+                .andExpect(jsonPath("$.version", is(1)));
+
+    }
+
 
     static String asJsonString(final Object obj) {
         try {
