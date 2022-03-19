@@ -14,6 +14,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.Mockito.doReturn;
@@ -103,6 +105,35 @@ class WidgetRestControllerTest {
                 .andExpect(jsonPath("$.id", is(1)))
                 .andExpect(jsonPath("$.name", is("New Widget")))
                 .andExpect(jsonPath("$.description", is("This is my widget")))
+                .andExpect(jsonPath("$.version", is(1)));
+    }
+
+    @Test
+    @DisplayName("PUT /rest/widget/1")
+    void testUpdateWidget()  throws Exception {
+        Widget widgetToPut = new Widget(1L, "Widget", "Description", 1);
+        Widget widgetToReturn = new Widget(1L, "Widget Update", "Description", 1);
+
+        doReturn(Optional.of(widgetToPut)).when(service).findById(1L);
+        doReturn(widgetToReturn).when(service).save(any());
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set(HttpHeaders.IF_MATCH, "1");
+
+        mockMvc.perform(put("/rest/widget/{id}",1L)
+                .headers(httpHeaders)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(widgetToPut)))
+                // Validate the response code and content type
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                // validate headers
+                .andExpect(header().string(HttpHeaders.LOCATION, "/rest/widget/1"))
+                .andExpect(header().string(HttpHeaders.ETAG, "\"1\""))
+                // Validate the returned fields
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is("Widget Update")))
+                .andExpect(jsonPath("$.description", is("Description")))
                 .andExpect(jsonPath("$.version", is(1)));
     }
 
